@@ -21,6 +21,7 @@
 #endif
 
 #include "drawinfo.h"
+#include "gadget_def.h"
 #include "gadget_button.h"
 #include "gadget_textinput.h"
 
@@ -72,7 +73,7 @@ getchoice(Window w)
 {
 	int i;
 	for (i=1; i<3; i++) {
-		if (buttons[i]->w == w)
+		if (buttons[i]->def.w == w)
 			return i;
 	}
 	return 0;
@@ -277,15 +278,15 @@ main(int argc, char *argv[])
 	  refresh_main();	
 	else if(event.xexpose.window == text_input->w)
 	  gadget_textinput_repaint(text_input);
-	else if(event.xexpose.window == buttons[1]->w) {
+	else if(event.xexpose.window == buttons[1]->def.w) {
 	  gadget_button_refresh(buttons[1]);
-	} else if(event.xexpose.window == buttons[2]->w) {
+	} else if(event.xexpose.window == buttons[2]->def.w) {
 	  gadget_button_refresh(buttons[2]);
 	}
       }
     case LeaveNotify:
       if (depressed) {
-        if ((selected > 0) && event.xcrossing.window == buttons[selected]->w) {
+        if ((selected > 0) && event.xcrossing.window == buttons[selected]->def.w) {
           depressed = 0;
           gadget_button_set_depressed(buttons[selected], 0);
           toggle(selected);
@@ -294,7 +295,7 @@ main(int argc, char *argv[])
 
       break;
     case EnterNotify:
-      if((!depressed) && selected && event.xcrossing.window == buttons[selected]->w) {
+      if((!depressed) && selected && event.xcrossing.window == buttons[selected]->def.w) {
         depressed = 1;
         gadget_button_set_depressed(buttons[selected], 1);
         toggle(selected);
