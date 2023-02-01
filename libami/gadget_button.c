@@ -22,12 +22,16 @@
 
 #include "drawinfo.h"
 
+#include "gadget_def.h"
 #include "gadget_button.h"
 
 #ifdef AMIGAOS
 #include <pragmas/xlib_pragmas.h>
 extern struct Library *XLibBase;
 #endif
+
+static void gadget_button_free(struct gadget_def *def);
+static int gadget_button_handle_event(struct gadget_def *def, XEvent *event);
 
 /*
  * This is the button code from the executecmd.c tool.
@@ -43,25 +47,38 @@ gadget_button_init(Display *dpy, struct DrawInfo *dri, GC gc, Window mainwin,
 	if (b == NULL) {
 		return (NULL);
 	}
+
+	if (gadget_def_init(GADGET_BUTTON_TO_DEF(b),
+	    dpy, mainwin, gc, dri, x, y, butw, buth, 0) <= 0) {
+		free(b);
+		return (NULL);
+	}
+
+#if 0
 	b->dpy = dpy;
 	b->dri = dri;
 	b->x = x;
 	b->y = y;
 	b->butw = butw;
 	b->buth = buth;
-	b->txt = strdup("");
 	b->gc = gc;
+#endif
 
-	b->w = XCreateSimpleWindow(dpy, mainwin,
+	b->txt = strdup("");
+
+	b->def.w = XCreateSimpleWindow(dpy, mainwin,
 	    x, y,
 	    butw, /* width */
 	    buth, /* height */
 	    0, /* depth */
-	    dri->dri_Pens[SHADOWPEN],
-	    dri->dri_Pens[BACKGROUNDPEN]);
+	    b->def.dri->dri_Pens[SHADOWPEN],
+	    b->def.dri->dri_Pens[BACKGROUNDPEN]);
 
-	XSelectInput(dpy, b->w, ExposureMask | ButtonPressMask
+	XSelectInput(b->def.dpy, b->def.w, ExposureMask | ButtonPressMask
 	    | ButtonReleaseMask | EnterWindowMask | LeaveWindowMask);
+
+	b->def.destroy_cb = gadget_button_free;
+	b->def.event_cb = gadget_button_handle_event;
 
 	return (b);
 }
@@ -77,35 +94,35 @@ gadget_button_set_text(struct gadget_button *b, const char *txt)
 void
 gadget_button_refresh(struct gadget_button *b)
 {
-	int fh = b->dri->dri_Ascent + b->dri->dri_Descent;
+	int fh = b->def.dri->dri_Ascent + b->def.dri->dri_Descent;
 	int h = fh + (2 * BUT_VSPACE);
 	int l=strlen(b->txt);
 #ifdef USE_FONTSETS
-	int tw = XmbTextEscapement(b->dri->dri_FontSet, b->txt, l);
+	int tw = XmbTextEscapement(b->def.dri->dri_FontSet, b->txt, l);
 #else
-	int tw = XTextWidth(b->dri->dri_Font, b->txt, l);
+	int tw = XTextWidth(b->def.dri->dri_Font, b->txt, l);
 #endif
-	XSetForeground(b->dpy, b->gc, b->dri->dri_Pens[TEXTPEN]);
+	XSetForeground(b->def.dpy, b->def.gc, b->def.dri->dri_Pens[TEXTPEN]);
 #ifdef USE_FONTSETS
-	XmbDrawString(b->dpy, b->w, b->dri->dri_FontSet, b->gc,
-	    (b->butw-tw)>>1, b->dri->dri_Ascent+BUT_VSPACE, b->txt, l);
+	XmbDrawString(b->def.dpy, b->def.w, b->def.dri->dri_FontSet, b->def.gc,
+	    (b->def.width-tw)>>1, b->def.dri->dri_Ascent+BUT_VSPACE, b->txt, l);
 #else
 	XDrawString(b->dpy, b->w, b->gc, (b->butw-tw)>>1,
 	    b->dri->dri_Ascent+BUT_VSPACE, b->txt, l);
 #endif
-	XSetForeground(b->dpy, b->gc,
-	    b->dri->dri_Pens[b->depressed ? SHADOWPEN:SHINEPEN]);
+	XSetForeground(b->def.dpy, b->def.gc,
+	    b->def.dri->dri_Pens[b->depressed ? SHADOWPEN:SHINEPEN]);
 
-	XDrawLine(b->dpy, b->w, b->gc, 0, 0, b->butw-2, 0);
-	XDrawLine(b->dpy, b->w, b->gc, 0, 0, 0, h-2);
-	XSetForeground(b->dpy, b->gc,
-	    b->dri->dri_Pens[b->depressed ? SHINEPEN:SHADOWPEN]);
+	XDrawLine(b->def.dpy, b->def.w, b->def.gc, 0, 0, b->def.width - 2, 0);
+	XDrawLine(b->def.dpy, b->def.w, b->def.gc, 0, 0, 0, h-2);
+	XSetForeground(b->def.dpy, b->def.gc,
+	    b->def.dri->dri_Pens[b->depressed ? SHINEPEN:SHADOWPEN]);
 
-	XDrawLine(b->dpy, b->w, b->gc, 1, h-1, b->butw-1, h-1);
-	XDrawLine(b->dpy, b->w, b->gc, b->butw-1, 1, b->butw-1, h-1);
-	XSetForeground(b->dpy, b->gc, b->dri->dri_Pens[BACKGROUNDPEN]);
-	XDrawPoint(b->dpy, b->w, b->gc, b->butw-1, 0);
-	XDrawPoint(b->dpy, b->w, b->gc, 0, h-1);
+	XDrawLine(b->def.dpy, b->def.w, b->def.gc, 1, h-1, b->def.width-1, h-1);
+	XDrawLine(b->def.dpy, b->def.w, b->def.gc, b->def.width -1, 1, b->def.width -1, h-1);
+	XSetForeground(b->def.dpy, b->def.gc, b->def.dri->dri_Pens[BACKGROUNDPEN]);
+	XDrawPoint(b->def.dpy, b->def.w, b->def.gc, b->def.width - 1, 0);
+	XDrawPoint(b->def.dpy, b->def.w, b->def.gc, 0, h-1);
 }
 
 void
@@ -122,15 +139,23 @@ gadget_button_toggle(struct gadget_button *b)
 	pen = (b->depressed) ? FILLPEN : BACKGROUNDPEN;
 
 
-	XSetWindowBackground(b->dpy, b->w, b->dri->dri_Pens[pen]);
-	XClearWindow(b->dpy, b->w);
+	XSetWindowBackground(b->def.dpy, b->def.w, b->def.dri->dri_Pens[pen]);
+	XClearWindow(b->def.dpy, b->def.w);
 	gadget_button_refresh(b);
 }
 
-void
-gadget_button_free(struct gadget_button *b)
+static void
+gadget_button_free(struct gadget_def *def)
 {
-	XDestroyWindow(b->dpy, b->w);
+	struct gadget_button *b = GADGET_DEF_TO_BUTTON(def);
+
+	XDestroyWindow(b->def.dpy, b->def.w);
 	free(b->txt);
 	free(b);
+}
+
+static int
+gadget_button_handle_event(struct gadget_def *def, XEvent *event)
+{
+	return (0);
 }

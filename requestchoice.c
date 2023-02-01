@@ -18,6 +18,8 @@ extern struct Library *XLibBase;
 #define BUT_INTSPACE 12
 #define BUT_EXTSPACE 4
 
+#include "gadget_def.h"
+#include "gadget_list.h"
 #include "gadget_button.h"
 #include "gadget_textbox.h"
 
@@ -51,6 +53,8 @@ struct choice *selected=NULL;
 struct DrawInfo dri;
 
 struct RDArgs *ra=NULL;
+
+struct gadget_list *glist = NULL;
 
 static void
 selection(int n)
@@ -149,7 +153,7 @@ struct choice *getchoice(Window w)
 {
   struct choice *c;
   for(c=firstchoice; c; c=c->next)
-    if(w == c->b->w)
+    if(w == c->b->def.w)
       return c;
   return NULL;
 }
@@ -209,6 +213,8 @@ int main(int argc, char *argv[])
   XGetWindowAttributes(dpy, root, &attr);
   init_dri(&dri, dpy, root, attr.colormap, False);
 
+  glist = gadget_list_create();
+
   split(array[1].ptr, "\n", addline);
   if((atp=array[2].ptr) != NULL)
     for(; atp->ptr; atp++)
@@ -232,6 +238,15 @@ int main(int argc, char *argv[])
 #ifndef USE_FONTSETS
   XSetFont(dpy, gc, dri.dri_Font->fid);
 #endif
+
+  /* Set the background pixmap for the window itself */
+  /*
+   * XXX TODO: yes we should likely have a window container
+   * abstraction that's used here so we can throw a collection
+   * of other widgets/gadgets into it.  That way we can
+   * do this kind of thing for all our app windows, as well
+   * as starting to direct XEvents into the right place.
+   */
   stipple=XCreatePixmap(dpy, mainwin, 2, 2, attr.depth);
   XSetForeground(dpy, gc, dri.dri_Pens[BACKGROUNDPEN]);
   XFillRectangle(dpy, stipple, gc, 0, 0, 2, 2);
@@ -267,6 +282,7 @@ int main(int argc, char *argv[])
         dri.dri_Ascent+dri.dri_Descent + BUT_VSPACE + 2);
     gadget_button_set_text(c->b, c->text);
     x+=c->w+BUT_BUTSPACE+BUT_INTSPACE;
+    gadget_list_add(glist, GADGET_BUTTON_TO_DEF(c->b));
   }
 
   /* Lay out + create text box contents */
@@ -288,6 +304,13 @@ int main(int argc, char *argv[])
   for(;;) {
     XEvent event;
     XNextEvent(dpy, &event);
+
+    /* Since we only have one window... */
+    if (gadget_list_handle_event(glist, &event) == 1) {
+	printf("event handled!\n");
+        continue;
+    }
+
     switch(event.type) {
     case Expose:
       if(!event.xexpose.count) {
@@ -298,14 +321,14 @@ int main(int argc, char *argv[])
       }
       break;
     case LeaveNotify:
-      if(depressed && event.xcrossing.window==selected->b->w) {
+      if(depressed && event.xcrossing.window==selected->b->def.w) {
 	depressed=0;
 	gadget_button_set_depressed(selected->b, 0);
 	toggle(selected);
       }
       break;
     case EnterNotify:
-      if((!depressed) && selected && event.xcrossing.window==selected->b->w) {
+      if((!depressed) && selected && event.xcrossing.window==selected->b->def.w) {
 	gadget_button_set_depressed(selected->b, 1);
 	depressed=1;
 	toggle(selected);
@@ -330,5 +353,6 @@ int main(int argc, char *argv[])
       break;
     }
   }
+  gadget_list_destroy(glist);
   FreeArgs(ra);
 }
