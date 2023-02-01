@@ -107,9 +107,22 @@ gadget_list_handle_event(struct gadget_list *list, XEvent *event)
 	/* Iterate over gadgets until we find one that consumes the event */
 	g = list->head;
 	while (g != NULL) {
-		ret = gadget_def_handle_event(g, event);
-		if (ret != 0) {
-			return (ret);
+		switch (event->type) {
+		case Expose:
+			if (! event->xexpose.count) {
+				if (event->xexpose.window == g->w) {
+					ret = gadget_def_handle_event_refresh(g);
+					if (ret != 0) {
+						return (ret);
+					}
+				}
+			}
+			break;
+		default:
+			ret = gadget_def_handle_event(g, event);
+			if (ret != 0) {
+				return (ret);
+			}
 		}
 
 		g = g->next;

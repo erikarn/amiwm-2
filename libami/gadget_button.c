@@ -32,6 +32,7 @@ extern struct Library *XLibBase;
 
 static void gadget_button_free(struct gadget_def *def);
 static int gadget_button_handle_event(struct gadget_def *def, XEvent *event);
+static int gadget_button_handle_event_refresh(struct gadget_def *def);
 
 /*
  * This is the button code from the executecmd.c tool.
@@ -79,6 +80,7 @@ gadget_button_init(Display *dpy, struct DrawInfo *dri, GC gc, Window mainwin,
 
 	b->def.destroy_cb = gadget_button_free;
 	b->def.event_cb = gadget_button_handle_event;
+	b->def.event_refresh_cb = gadget_button_handle_event_refresh;
 
 	return (b);
 }
@@ -158,4 +160,13 @@ static int
 gadget_button_handle_event(struct gadget_def *def, XEvent *event)
 {
 	return (0);
+}
+
+static int
+gadget_button_handle_event_refresh(struct gadget_def *def)
+{
+	struct gadget_button *b = GADGET_DEF_TO_BUTTON(def);
+
+	gadget_button_refresh(b);
+	return (1);
 }

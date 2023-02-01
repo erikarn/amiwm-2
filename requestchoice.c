@@ -316,8 +316,6 @@ int main(int argc, char *argv[])
       if(!event.xexpose.count) {
 	if(event.xexpose.window == g_textbox->w)
 	  gadget_textbox_refresh(g_textbox);
-	else if((c=getchoice(event.xexpose.window)))
-	  refresh_choice(c);
       }
       break;
     case LeaveNotify:

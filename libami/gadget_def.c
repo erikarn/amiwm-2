@@ -60,11 +60,26 @@ gadget_def_destroy(struct gadget_def *def)
 	free(def);
 }
 
+/*
+ * Fallthrough x11 event handling.
+ */
 int
 gadget_def_handle_event(struct gadget_def *def, XEvent *event)
 {
 	if (def->event_cb) {
 		return def->event_cb(def, event);
+	}
+	return -1;
+}
+
+/*
+ * Refresh/repaint expose event.
+ */
+int
+gadget_def_handle_event_refresh(struct gadget_def *def)
+{
+	if (def->event_refresh_cb) {
+		return def->event_refresh_cb(def);
 	}
 	return -1;
 }
