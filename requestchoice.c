@@ -20,6 +20,7 @@ extern struct Library *XLibBase;
 
 #include "gadget_def.h"
 #include "gadget_list.h"
+#include "gadget_window.h"
 #include "gadget_button.h"
 #include "gadget_textbox.h"
 
@@ -37,13 +38,12 @@ struct line {
 } *firstline=NULL, *lastline=NULL;
 
 Display *dpy;
-Window root, mainwin;
+Window root;
 
 //Window textwin;
 struct gadget_textbox *g_textbox;
 
 char *progname;
-GC gc;
 Pixmap stipple;
 
 int totw=0, maxw=0, toth=0, nchoices=0;
@@ -54,13 +54,11 @@ struct DrawInfo dri;
 
 struct RDArgs *ra=NULL;
 
-struct gadget_list *glist = NULL;
 
 static void
 selection(int n)
 {
 	printf("%d\n", n);
-	XDestroyWindow(dpy, mainwin);
 	XCloseDisplay(dpy);
 	FreeArgs(ra);
 	exit(0);
@@ -185,12 +183,16 @@ void endchoice()
 int main(int argc, char *argv[])
 {
   XWindowAttributes attr;
+#if 0
   static XSizeHints size_hints;
   static XTextProperty txtprop1, txtprop2;
+#endif
   int x, y, extra=0, n=0;
   struct choice *c;
   struct line *l;
   Argtype array[3], *atp;
+  struct gadget_list *glist = NULL;
+  struct gadget_window *win = NULL;
 
   progname=argv[0];
   initargs(argc, argv);
@@ -225,15 +227,17 @@ int main(int argc, char *argv[])
     totw=maxw;
   }
 
-  mainwin=XCreateSimpleWindow(dpy, root, 0, 0, totw, toth, 1,
-			      dri.dri_Pens[SHADOWPEN],
-			      dri.dri_Pens[BACKGROUNDPEN]);
-  gc=XCreateGC(dpy, mainwin, 0, NULL);
-  XSetBackground(dpy, gc, dri.dri_Pens[BACKGROUNDPEN]);
-#ifndef USE_FONTSETS
-  XSetFont(dpy, gc, dri.dri_Font->fid);
-#endif
+  /* Create top-level application window */
+  win = gadget_window_init(dpy, &dri, root, totw, toth);
+  /* XXX errors */
 
+  /*
+   * XXX TODO: yes, definitely, positively want to make
+   * some way to do this as a window background pattern,
+   * just need to create a method for it and keep the Pixmap
+   * in gadget_window for safe keeping.
+   */
+#if 0
   /* Set the background pixmap for the window itself */
   /*
    * XXX TODO: yes we should likely have a window container
@@ -249,25 +253,24 @@ int main(int argc, char *argv[])
   XDrawPoint(dpy, stipple, gc, 0, 1);
   XDrawPoint(dpy, stipple, gc, 1, 0);
   XSetWindowBackgroundPixmap(dpy, mainwin, stipple);
+#endif
 
-  g_textbox = gadget_textbox_create(dpy, &dri, gc, mainwin,
+  /* Add it to our top level gadget list for event routing */
+  gadget_list_add(glist, GADGET_WINDOW_TO_DEF(win));
+
+  /* Create the top-level textbox */
+  g_textbox = gadget_textbox_create(dpy, &dri, win->def.gc, win->def.w,
     BUT_EXTSPACE,
     TXT_TOPSPACE,
     totw - BUT_EXTSPACE - BUT_EXTSPACE,
     toth-TXT_TOPSPACE- TXT_MIDSPACE-TXT_BOTSPACE-BUT_VSPACE- (dri.dri_Ascent+dri.dri_Descent));
-#if 0
-  textwin=XCreateSimpleWindow(dpy, mainwin, BUT_EXTSPACE, TXT_TOPSPACE, totw-
-			      BUT_EXTSPACE-BUT_EXTSPACE,
-			      0, dri.dri_Pens[SHADOWPEN],
-			      dri.dri_Pens[BACKGROUNDPEN]);
-  XSelectInput(dpy, textwin, ExposureMask);
-#endif
+  /* XXX TODO: when it's ready, add it to the window glist */
 
   /* Lay out + create buttons */
   x=BUT_EXTSPACE;
   y=toth-TXT_BOTSPACE-(dri.dri_Ascent+dri.dri_Descent)-BUT_VSPACE;
   for(c=firstchoice; c; c=c->next) {
-    c->b = gadget_button_init(dpy, &dri, gc, mainwin,
+    c->b = gadget_button_init(dpy, &dri, win->def.gc, win->def.w,
         x + (nchoices == 1 ? (extra >> 1) : n++*extra/(nchoices-1)),
         y,
         c->w + BUT_BUTSPACE,
@@ -277,7 +280,8 @@ int main(int argc, char *argv[])
         dri.dri_Ascent+dri.dri_Descent + BUT_VSPACE + 2);
     gadget_button_set_text(c->b, c->text);
     x+=c->w+BUT_BUTSPACE+BUT_INTSPACE;
-    gadget_list_add(glist, GADGET_BUTTON_TO_DEF(c->b));
+    /* Add it to the window glist that we're in */
+    gadget_list_add(win->glist, GADGET_BUTTON_TO_DEF(c->b));
   }
 
   /* Lay out + create text box contents */
@@ -285,6 +289,8 @@ int main(int argc, char *argv[])
     gadget_textbox_addline(g_textbox, l->text);
   }
 
+  /* XXX TODO: add gadget_window set title and icon name calls here */
+#if 0
   size_hints.flags = PResizeInc;
   txtprop1.value=(unsigned char *)array[0].ptr;
   txtprop2.value=(unsigned char *)"RequestChoice";
@@ -294,13 +300,26 @@ int main(int argc, char *argv[])
   txtprop2.nitems=strlen((char *)txtprop2.value);
   XSetWMProperties(dpy, mainwin, &txtprop1, &txtprop2, argv, argc,
 		   &size_hints, NULL, NULL);
+#endif
+
+
+#if 0
   XMapSubwindows(dpy, mainwin);
   XMapRaised(dpy, mainwin);
+#endif
+  /*
+   * This does XMapSubWindows, XMapRaised; need to understand those
+   * calls better and figure out how to implicitly do it or have
+   * a better named function.
+   */
+  gadget_window_update(win);
+
   for(;;) {
     XEvent event;
     XNextEvent(dpy, &event);
 
-    /* Since we only have one window... */
+    /* Pass event to our top-level glist, which has our main window */
+    /* It will pass events to the windows glist and thus gadgets there */
     if (gadget_list_handle_event(glist, &event) == 1) {
 	printf("event handled!\n");
         continue;

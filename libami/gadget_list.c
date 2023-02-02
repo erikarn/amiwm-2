@@ -112,7 +112,7 @@ gadget_list_handle_event(struct gadget_list *list, XEvent *event)
 			if (! event->xexpose.count) {
 				if (event->xexpose.window == g->w) {
 					ret = gadget_def_handle_event_refresh(g);
-					if (ret != 0) {
+					if (ret > 0) {
 						return (ret);
 					}
 				}
@@ -121,7 +121,7 @@ gadget_list_handle_event(struct gadget_list *list, XEvent *event)
 		case EnterNotify:
 			if (event->xcrossing.window == g->w) {
 				ret = gadget_def_handle_event_enter(g);
-				if (ret != 0) {
+				if (ret > 0) {
 					return (ret);
 				}
 			}
@@ -129,7 +129,7 @@ gadget_list_handle_event(struct gadget_list *list, XEvent *event)
 		case LeaveNotify:
 			if (event->xcrossing.window == g->w) {
 				ret = gadget_def_handle_event_leave(g);
-				if (ret != 0) {
+				if (ret > 0) {
 					return (ret);
 				}
 			}
@@ -138,7 +138,7 @@ gadget_list_handle_event(struct gadget_list *list, XEvent *event)
 			if (event->xbutton.window == g->w) {
 				ret = gadget_def_handle_event_button_press(g,
 				    event->xbutton.button);
-				if (ret != 0) {
+				if (ret > 0) {
 					return (ret);
 				}
 			}
@@ -148,16 +148,20 @@ gadget_list_handle_event(struct gadget_list *list, XEvent *event)
 				ret =
 				    gadget_def_handle_event_button_release(g,
 				    event->xbutton.button);
-				if (ret != 0) {
+				if (ret > 0) {
 					return (ret);
 				}
 			}
 			break;
-		default:
-			ret = gadget_def_handle_event(g, event);
-			if (ret != 0) {
-				return (ret);
-			}
+		}
+
+		/*
+		 * Got to here - no specific event handler did anything;
+		 * let's instead try the generic X11 handler.
+		 */
+		ret = gadget_def_handle_event(g, event);
+		if (ret > 0) {
+			return (ret);
 		}
 
 		g = g->next;
