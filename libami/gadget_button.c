@@ -194,6 +194,7 @@ gadget_button_handle_event_enter(struct gadget_def *def)
 	if (b->depressed == 1) {
 		gadget_button_toggle_depressed(b, 1);
 	}
+	b->entered = 1;
 
 	return (1);
 }
@@ -208,6 +209,7 @@ gadget_button_handle_event_leave(struct gadget_def *def)
 	if (b->depressed == 1) {
 		gadget_button_toggle_depressed(b, 0);
 	}
+	b->entered = 0;
 
 	return (1);
 }
@@ -224,6 +226,11 @@ gadget_button_handle_event_button_press(struct gadget_def *def, int button)
 
 	gadget_button_set_depressed(b, 1);
 	gadget_button_toggle(b);
+
+	/*
+	 * TODO: trigger up a notification that the button was pressed.
+	 */
+	printf("%s: TODO: notification!\n", __func__);
 	return (1);
 }
 
@@ -239,6 +246,13 @@ gadget_button_handle_event_button_release(struct gadget_def *def, int button)
 
 	gadget_button_set_depressed(b, 0);
 	gadget_button_toggle(b);
+
+	/*
+	 * TODO: trigger up a notification, note whether we were actually
+	 * released or just released + actually pressed and should register
+	 * as a selection.
+	 */
+	printf("%s: TODO: notification!, entered=%d\n", __func__, b->entered);
 
 	return (1);
 }

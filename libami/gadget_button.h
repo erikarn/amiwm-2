@@ -29,6 +29,7 @@ struct gadget_button {
 
 	char *txt;
 	int depressed;
+	int entered;
 };
 
 extern	struct gadget_button * gadget_button_init(Display *dpy,
