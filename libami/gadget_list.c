@@ -118,6 +118,41 @@ gadget_list_handle_event(struct gadget_list *list, XEvent *event)
 				}
 			}
 			break;
+		case EnterNotify:
+			if (event->xcrossing.window == g->w) {
+				ret = gadget_def_handle_event_enter(g);
+				if (ret != 0) {
+					return (ret);
+				}
+			}
+			break;
+		case LeaveNotify:
+			if (event->xcrossing.window == g->w) {
+				ret = gadget_def_handle_event_leave(g);
+				if (ret != 0) {
+					return (ret);
+				}
+			}
+			break;
+		case ButtonPress:
+			if (event->xbutton.window == g->w) {
+				ret = gadget_def_handle_event_button_press(g,
+				    event->xbutton.button);
+				if (ret != 0) {
+					return (ret);
+				}
+			}
+			break;
+		case ButtonRelease:
+			if (event->xbutton.window == g->w) {
+				ret =
+				    gadget_def_handle_event_button_release(g,
+				    event->xbutton.button);
+				if (ret != 0) {
+					return (ret);
+				}
+			}
+			break;
 		default:
 			ret = gadget_def_handle_event(g, event);
 			if (ret != 0) {

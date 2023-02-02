@@ -134,11 +134,6 @@ addline(const char *txt)
     maxw=l->w;
 }
 
-void refresh_choice(struct choice *c)
-{
-  gadget_button_refresh(c->b);
-}
-
 static void
 split(char *str, const char *delim, void (*func)(const char *))
 {

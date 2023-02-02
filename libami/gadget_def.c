@@ -83,3 +83,51 @@ gadget_def_handle_event_refresh(struct gadget_def *def)
 	}
 	return -1;
 }
+
+/*
+ * Mouse pointer entering the window.
+ */
+int
+gadget_def_handle_event_enter(struct gadget_def *def)
+{
+	if (def->event_enter_cb) {
+		return def->event_enter_cb(def);
+	}
+	return -1;
+}
+
+/*
+ * Mouse pointer leaving the window.
+ */
+int
+gadget_def_handle_event_leave(struct gadget_def *def)
+{
+	if (def->event_leave_cb) {
+		return def->event_leave_cb(def);
+	}
+	return -1;
+}
+
+/*
+ * Button press event.
+ */
+int
+gadget_def_handle_event_button_press(struct gadget_def *def, int button)
+{
+	if (def->event_button_press_cb) {
+		return def->event_button_press_cb(def, button);
+	}
+	return -1;
+}
+
+/*
+ * Button release event.
+ */
+int
+gadget_def_handle_event_button_release(struct gadget_def *def, int button)
+{
+	if (def->event_button_release_cb) {
+		return def->event_button_release_cb(def, button);
+	}
+	return -1;
+}

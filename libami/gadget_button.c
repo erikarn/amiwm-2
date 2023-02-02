@@ -33,6 +33,12 @@ extern struct Library *XLibBase;
 static void gadget_button_free(struct gadget_def *def);
 static int gadget_button_handle_event(struct gadget_def *def, XEvent *event);
 static int gadget_button_handle_event_refresh(struct gadget_def *def);
+static int gadget_button_handle_event_enter(struct gadget_def *def);
+static int gadget_button_handle_event_leave(struct gadget_def *def);
+static int gadget_button_handle_event_button_press(struct gadget_def *def,
+	    int button);
+static int gadget_button_handle_event_button_release(struct gadget_def *def,
+	    int button);
 
 /*
  * This is the button code from the executecmd.c tool.
@@ -55,16 +61,6 @@ gadget_button_init(Display *dpy, struct DrawInfo *dri, GC gc, Window mainwin,
 		return (NULL);
 	}
 
-#if 0
-	b->dpy = dpy;
-	b->dri = dri;
-	b->x = x;
-	b->y = y;
-	b->butw = butw;
-	b->buth = buth;
-	b->gc = gc;
-#endif
-
 	b->txt = strdup("");
 
 	b->def.w = XCreateSimpleWindow(dpy, mainwin,
@@ -81,6 +77,10 @@ gadget_button_init(Display *dpy, struct DrawInfo *dri, GC gc, Window mainwin,
 	b->def.destroy_cb = gadget_button_free;
 	b->def.event_cb = gadget_button_handle_event;
 	b->def.event_refresh_cb = gadget_button_handle_event_refresh;
+	b->def.event_enter_cb = gadget_button_handle_event_enter;
+	b->def.event_leave_cb = gadget_button_handle_event_leave;
+	b->def.event_button_press_cb = gadget_button_handle_event_button_press;
+	b->def.event_button_release_cb = gadget_button_handle_event_button_release;
 
 	return (b);
 }
@@ -93,8 +93,8 @@ gadget_button_set_text(struct gadget_button *b, const char *txt)
 	b->txt = strdup(txt);
 }
 
-void
-gadget_button_refresh(struct gadget_button *b)
+static void
+gadget_button_refresh_depressed(struct gadget_button *b, int depressed)
 {
 	int fh = b->def.dri->dri_Ascent + b->def.dri->dri_Descent;
 	int h = fh + (2 * BUT_VSPACE);
@@ -113,12 +113,12 @@ gadget_button_refresh(struct gadget_button *b)
 	    b->dri->dri_Ascent+BUT_VSPACE, b->txt, l);
 #endif
 	XSetForeground(b->def.dpy, b->def.gc,
-	    b->def.dri->dri_Pens[b->depressed ? SHADOWPEN:SHINEPEN]);
+	    b->def.dri->dri_Pens[depressed ? SHADOWPEN:SHINEPEN]);
 
 	XDrawLine(b->def.dpy, b->def.w, b->def.gc, 0, 0, b->def.width - 2, 0);
 	XDrawLine(b->def.dpy, b->def.w, b->def.gc, 0, 0, 0, h-2);
 	XSetForeground(b->def.dpy, b->def.gc,
-	    b->def.dri->dri_Pens[b->depressed ? SHINEPEN:SHADOWPEN]);
+	    b->def.dri->dri_Pens[depressed ? SHINEPEN:SHADOWPEN]);
 
 	XDrawLine(b->def.dpy, b->def.w, b->def.gc, 1, h-1, b->def.width-1, h-1);
 	XDrawLine(b->def.dpy, b->def.w, b->def.gc, b->def.width -1, 1, b->def.width -1, h-1);
@@ -128,22 +128,36 @@ gadget_button_refresh(struct gadget_button *b)
 }
 
 void
+gadget_button_refresh(struct gadget_button *b)
+{
+	gadget_button_refresh_depressed(b, b->depressed);
+}
+
+void
 gadget_button_set_depressed(struct gadget_button *b, int depressed)
 {
+
 	b->depressed = depressed;
+}
+
+static void
+gadget_button_toggle_depressed(struct gadget_button *b, int depressed)
+{
+	int pen;
+
+	pen = (depressed) ? FILLPEN : BACKGROUNDPEN;
+
+
+	XSetWindowBackground(b->def.dpy, b->def.w, b->def.dri->dri_Pens[pen]);
+	XClearWindow(b->def.dpy, b->def.w);
+	gadget_button_refresh_depressed(b, depressed);
 }
 
 void
 gadget_button_toggle(struct gadget_button *b)
 {
-	int pen;
 
-	pen = (b->depressed) ? FILLPEN : BACKGROUNDPEN;
-
-
-	XSetWindowBackground(b->def.dpy, b->def.w, b->def.dri->dri_Pens[pen]);
-	XClearWindow(b->def.dpy, b->def.w);
-	gadget_button_refresh(b);
+	gadget_button_toggle_depressed(b, b->depressed);
 }
 
 static void
@@ -168,5 +182,63 @@ gadget_button_handle_event_refresh(struct gadget_def *def)
 	struct gadget_button *b = GADGET_DEF_TO_BUTTON(def);
 
 	gadget_button_refresh(b);
+	return (1);
+}
+
+static int
+gadget_button_handle_event_enter(struct gadget_def *def)
+{
+	struct gadget_button *b = GADGET_DEF_TO_BUTTON(def);
+
+	/* If we enter and we're depressed, draw the depressed button */
+	if (b->depressed == 1) {
+		gadget_button_toggle_depressed(b, 1);
+	}
+
+	return (1);
+}
+
+static int
+gadget_button_handle_event_leave(struct gadget_def *def)
+{
+	struct gadget_button *b = GADGET_DEF_TO_BUTTON(def);
+	(void) b;
+
+	/* If we leave but we're depressed, draw the not-depressed button */
+	if (b->depressed == 1) {
+		gadget_button_toggle_depressed(b, 0);
+	}
+
+	return (1);
+}
+
+static int
+gadget_button_handle_event_button_press(struct gadget_def *def, int button)
+{
+	struct gadget_button *b = GADGET_DEF_TO_BUTTON(def);
+
+	/* Consume */
+	if (button != Button1) {
+		return (1);
+	}
+
+	gadget_button_set_depressed(b, 1);
+	gadget_button_toggle(b);
+	return (1);
+}
+
+static int
+gadget_button_handle_event_button_release(struct gadget_def *def, int button)
+{
+	struct gadget_button *b = GADGET_DEF_TO_BUTTON(def);
+
+	/* Consume */
+	if (button != Button1) {
+		return (1);
+	}
+
+	gadget_button_set_depressed(b, 0);
+	gadget_button_toggle(b);
+
 	return (1);
 }
