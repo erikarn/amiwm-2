@@ -40,9 +40,6 @@ struct line {
 Display *dpy;
 Window root;
 
-//Window textwin;
-struct gadget_textbox *g_textbox;
-
 char *progname;
 Pixmap stipple;
 
@@ -193,6 +190,7 @@ int main(int argc, char *argv[])
   Argtype array[3], *atp;
   struct gadget_list *glist = NULL;
   struct gadget_window *win = NULL;
+  struct gadget_textbox *g_textbox = NULL;
 
   progname=argv[0];
   initargs(argc, argv);
@@ -264,7 +262,8 @@ int main(int argc, char *argv[])
     TXT_TOPSPACE,
     totw - BUT_EXTSPACE - BUT_EXTSPACE,
     toth-TXT_TOPSPACE- TXT_MIDSPACE-TXT_BOTSPACE-BUT_VSPACE- (dri.dri_Ascent+dri.dri_Descent));
-  /* XXX TODO: when it's ready, add it to the window glist */
+   /* add it to the window glist */
+    gadget_list_add(win->glist, GADGET_TEXTBOX_TO_DEF(g_textbox));
 
   /* Lay out + create buttons */
   x=BUT_EXTSPACE;
@@ -324,13 +323,9 @@ int main(int argc, char *argv[])
 	printf("event handled!\n");
         continue;
     }
-
+#if 0
     switch(event.type) {
     case Expose:
-      if(!event.xexpose.count) {
-	if(event.xexpose.window == g_textbox->w)
-	  gadget_textbox_refresh(g_textbox);
-      }
       break;
     case LeaveNotify:
       if(depressed && event.xcrossing.window==selected->b->def.w) {
@@ -364,6 +359,8 @@ int main(int argc, char *argv[])
       }
       break;
     }
+#endif
+
   }
   gadget_list_destroy(glist);
   FreeArgs(ra);

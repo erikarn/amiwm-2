@@ -16,17 +16,6 @@ struct gadget_button {
 	/* Must be first */
 	struct gadget_def def;
 
-#if 0
-	Display *dpy;
-	struct DrawInfo *dri;
-	Window w;
-	GC gc;
-	int x;
-	int y;
-	int buth;
-	int butw;
-#endif
-
 	char *txt;
 	int depressed;
 	int entered;
