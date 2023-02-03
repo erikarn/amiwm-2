@@ -29,8 +29,4 @@ extern	struct gadget_textbox *gadget_textbox_create(Display *dpy,
 extern	struct gadget_textbox_line * gadget_textbox_addline(
 	    struct gadget_textbox *g, const char *text);
 
-/* Legacy routines, delete when everything is using gadget lists  */
-extern	void gadget_textbox_free(struct gadget_textbox *g);
-extern	void gadget_textbox_refresh(struct gadget_textbox *g);
-
 #endif	/* __LIBAMI_GADGET_TEXTBOX_H__ */

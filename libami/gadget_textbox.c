@@ -51,12 +51,6 @@ gadget_textbox_create(Display *dpy, struct DrawInfo *dri, GC gc,
 	return (g);
 }
 
-void
-gadget_textbox_free(struct gadget_textbox *g)
-{
-	/* XXX TODO */
-}
-
 struct gadget_textbox_line *
 gadget_textbox_addline(struct gadget_textbox *g, const char *text)
 {
@@ -83,7 +77,7 @@ gadget_textbox_addline(struct gadget_textbox *g, const char *text)
 	return (l);
 }
 
-void
+static void
 gadget_textbox_refresh(struct gadget_textbox *g)
 {
   struct gadget_textbox_line *l;
