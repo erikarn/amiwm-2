@@ -109,8 +109,10 @@ gadget_window_free(struct gadget_def *def)
 	win->def.gc = NULL;
 
 	/* Now free our memory */
-	free(win->title_label);
-	free(win->icon_label);
+	if (win->title_label)
+		free(win->title_label);
+	if (win->icon_label)
+		free(win->icon_label);
 	free(win);
 }
 
@@ -153,4 +155,30 @@ gadget_window_update(struct gadget_window *win)
 {
 	gadget_window_update_wm_properties(win);
 	gadget_window_update_window_setup(win);
+}
+
+int
+gadget_window_set_title_label(struct gadget_window *win, const char *title)
+{
+	if (win->title_label != NULL) {
+		free(win->title_label);
+	}
+	win->title_label = strdup(title);
+	if (win->title_label == NULL) {
+		return (0);
+	}
+	return (1);
+}
+
+int
+gadget_window_set_icon_label(struct gadget_window *win, const char *label)
+{
+	if (win->icon_label != NULL) {
+		free(win->icon_label);
+	}
+	win->icon_label = strdup(label);
+	if (win->icon_label == NULL) {
+		return (0);
+	}
+	return (1);
 }

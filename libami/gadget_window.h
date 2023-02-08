@@ -23,8 +23,8 @@ extern	struct gadget_window * gadget_window_init(Display *dpy,
 	    struct DrawInfo *dri, Window parent_win,
 	    int width, int height);
 
-extern	void gadget_window_set_title_label(struct gadget_window *win, const char *txt);
-extern	void gadget_window_set_icon_label(struct gadget_window *win, const char *txt);
+extern	int gadget_window_set_title_label(struct gadget_window *win, const char *txt);
+extern	int gadget_window_set_icon_label(struct gadget_window *win, const char *txt);
 
 /* Update the window - for now, setting wm properties, raise window, subwindow map, etc */
 extern	void gadget_window_update(struct gadget_window *win);

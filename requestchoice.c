@@ -289,18 +289,8 @@ int main(int argc, char *argv[])
   }
 
   /* XXX TODO: add gadget_window set title and icon name calls here */
-#if 0
-  size_hints.flags = PResizeInc;
-  txtprop1.value=(unsigned char *)array[0].ptr;
-  txtprop2.value=(unsigned char *)"RequestChoice";
-  txtprop2.encoding=txtprop1.encoding=XA_STRING;
-  txtprop2.format=txtprop1.format=8;
-  txtprop1.nitems=strlen((char *)txtprop1.value);
-  txtprop2.nitems=strlen((char *)txtprop2.value);
-  XSetWMProperties(dpy, mainwin, &txtprop1, &txtprop2, argv, argc,
-		   &size_hints, NULL, NULL);
-#endif
-
+  gadget_window_set_title_label(win, array[0].ptr);
+  gadget_window_set_icon_label(win, "RequestChoice");
 
 #if 0
   XMapSubwindows(dpy, mainwin);
@@ -310,6 +300,9 @@ int main(int argc, char *argv[])
    * This does XMapSubWindows, XMapRaised; need to understand those
    * calls better and figure out how to implicitly do it or have
    * a better named function.
+   *
+   * It also updates the window manager properties (window title,
+   * minimised icon title.)
    */
   gadget_window_update(win);
 
