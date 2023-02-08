@@ -101,8 +101,17 @@ gadget_window_free(struct gadget_def *def)
 	gadget_list_destroy(win->glist);
 	win->glist = NULL;
 
+	/* Delete the pixmap first */
+	XSetWindowBackgroundPixmap(win->def.dpy, win->def.w, None);
+
 	/* Now we can destroy the window */
 	XDestroyWindow(win->def.dpy, win->def.w);
+
+	/* And the pixmap */
+	if (win->bg_pixmap != 0) {
+		XFreePixmap(win->def.dpy, win->bg_pixmap);
+		win->bg_pixmap = 0;
+	}
 
 	/* Now we can destroy the GC */
 	XFreeGC(win->def.dpy, win->def.gc);
@@ -113,6 +122,8 @@ gadget_window_free(struct gadget_def *def)
 		free(win->title_label);
 	if (win->icon_label)
 		free(win->icon_label);
+	win->title_label = NULL;
+	win->icon_label = NULL;
 	free(win);
 }
 
@@ -180,5 +191,20 @@ gadget_window_set_icon_label(struct gadget_window *win, const char *label)
 	if (win->icon_label == NULL) {
 		return (0);
 	}
+	return (1);
+}
+
+int
+gadget_window_set_background_pixmap(struct gadget_window *win, Pixmap p)
+{
+	if (win->bg_pixmap != 0) {
+		XSetWindowBackgroundPixmap(win->def.dpy, win->def.w, None);
+		XFreePixmap(win->def.dpy, win->bg_pixmap);
+		win->bg_pixmap = 0;
+	}
+	win->bg_pixmap = p;
+
+	XSetWindowBackgroundPixmap(win->def.dpy, win->def.w, win->bg_pixmap);
+
 	return (1);
 }

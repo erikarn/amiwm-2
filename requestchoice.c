@@ -41,7 +41,6 @@ Display *dpy;
 Window root;
 
 char *progname;
-Pixmap stipple;
 
 int totw=0, maxw=0, toth=0, nchoices=0;
 int depressed=0;
@@ -191,6 +190,7 @@ int main(int argc, char *argv[])
   struct gadget_list *glist = NULL;
   struct gadget_window *win = NULL;
   struct gadget_textbox *g_textbox = NULL;
+  Pixmap stipple;
 
   progname=argv[0];
   initargs(argc, argv);
@@ -229,28 +229,30 @@ int main(int argc, char *argv[])
   win = gadget_window_init(dpy, &dri, root, totw, toth);
   /* XXX errors */
 
+#if 0
   /*
    * XXX TODO: yes, definitely, positively want to make
    * some way to do this as a window background pattern,
    * just need to create a method for it and keep the Pixmap
    * in gadget_window for safe keeping.
+   *
+   * Note that creating the pixmap requires the destination X11
+   * Window and GC, which is peeking under the hood a bit much
+   * for what i want to do here.
    */
-#if 0
+  stipple = XCreatePixmap(win->def.dpy, win->def.w, 2, 2, attr.depth);
+  // Note - this isn't drawing in the stipple; it's drawing in the gc */
+  XSetForeground(win->def.dpy, win->def.gc, win->def.dri->dri_Pens[BACKGROUNDPEN]);
+  XFillRectangle(win->def.dpy, stipple, win->def.gc, 0, 0, 2, 2);
+  // Note - this isn't drawing in the stipple; it's drawing in the gc */
+  XSetForeground(win->def.dpy, win->def.gc, win->def.dri->dri_Pens[SHINEPEN]);
+  XDrawPoint(win->def.dpy, stipple, win->def.gc, 0, 1);
+  XDrawPoint(win->def.dpy, stipple, win->def.gc, 1, 0);
+
   /* Set the background pixmap for the window itself */
-  /*
-   * XXX TODO: yes we should likely have a window container
-   * abstraction that's used here so we can throw a collection
-   * of other widgets/gadgets into it.  That way we can
-   * do this kind of thing for all our app windows, as well
-   * as starting to direct XEvents into the right place.
-   */
-  stipple=XCreatePixmap(dpy, mainwin, 2, 2, attr.depth);
-  XSetForeground(dpy, gc, dri.dri_Pens[BACKGROUNDPEN]);
-  XFillRectangle(dpy, stipple, gc, 0, 0, 2, 2);
-  XSetForeground(dpy, gc, dri.dri_Pens[SHINEPEN]);
-  XDrawPoint(dpy, stipple, gc, 0, 1);
-  XDrawPoint(dpy, stipple, gc, 1, 0);
-  XSetWindowBackgroundPixmap(dpy, mainwin, stipple);
+  gadget_window_set_background_pixmap(win, stipple);
+  /* stipple is no longer ours */
+  stipple = 0;
 #endif
 
   /* Add it to our top level gadget list for event routing */

@@ -15,6 +15,7 @@ struct gadget_window {
 
 	XSizeHints size_hints;
 	XTextProperty txtprop1, txtprop2;
+	Pixmap bg_pixmap;
 
 	struct gadget_list *glist;
 };
@@ -28,5 +29,8 @@ extern	int gadget_window_set_icon_label(struct gadget_window *win, const char *t
 
 /* Update the window - for now, setting wm properties, raise window, subwindow map, etc */
 extern	void gadget_window_update(struct gadget_window *win);
+
+extern	int gadget_window_set_background_pixmap(struct gadget_window *win,
+	     Pixmap p);
 
 #endif	/* __LIBAMI__GADGET_WINDOW_H__ */
