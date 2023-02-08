@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/queue.h>
+
 #include "drawinfo.h"
 #include "libami.h"
 

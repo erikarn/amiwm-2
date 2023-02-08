@@ -6,7 +6,7 @@ typedef int gadget_list_event_cb(struct gadget_list *list, XEvent *event);
 
 struct gadget_list {
 	/* Yeah, single link list for now */
-	struct gadget_def *head;
+	TAILQ_HEAD(gadget_def_l, gadget_def) list;
 
 	gadget_list_event_cb *event_cb;
 };

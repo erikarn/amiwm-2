@@ -20,7 +20,10 @@
 #include <wchar.h>
 #endif
 
+#include <sys/queue.h>
+
 #include "drawinfo.h"
+
 
 #include "gadget_def.h"
 

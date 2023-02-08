@@ -18,7 +18,7 @@ typedef int gadget_def_handle_event_button_release_cb(struct gadget_def *def,
 
 struct gadget_def {
 	/* next in gadget list */
-	struct gadget_def *next;
+	TAILQ_ENTRY(gadget_def) entry;
 
 	/* parent gadget collection */
 	struct gadget_list *list;

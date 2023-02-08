@@ -20,6 +20,8 @@
 #include <wchar.h>
 #endif
 
+#include <sys/queue.h>
+
 #include "gadget_def.h"
 #include "gadget_list.h"
 
@@ -33,67 +35,44 @@ gadget_list_create(void)
 		return (NULL);
 	}
 
+	TAILQ_INIT(&l->list);
+
 	return l;
 }
 
 void
 gadget_list_destroy(struct gadget_list *list)
 {
-	struct gadget_def *g, *gn;
+	struct gadget_def *g;
 
-	g = list->head;
-	while (g != NULL) {
-		gn = g->next;
-		g->next = NULL;
-		g->list = NULL;
+	while (! TAILQ_EMPTY(&list->list)) {
+		g = TAILQ_FIRST(&list->list);
+		TAILQ_REMOVE(&list->list, g, entry);
 		gadget_def_destroy(g);
-		g = gn;
 	}
 
 	free(list);
 }
 
-/* XXX TODO: use dlink list types already */
-/* XXX TODO: should add to tail, not head */
 void
 gadget_list_add(struct gadget_list *list, struct gadget_def *g)
 {
-	g->next = list->head;
+	TAILQ_INSERT_TAIL(&list->list, g, entry);
 	g->list = list;
-	list->head = g;
 }
 
-/* XXX TODO: use dlink list types already */
 void
 gadget_list_remove(struct gadget_list *list, struct gadget_def *g)
 {
-	struct gadget_def *gg;
 
-	/* handle head */
-	if (list->head == g) {
-		list->head = list->head->next;
-		g->next = NULL;
-		g->list = NULL;
-		return;
-	}
-
-	/* handle !head */
-	gg = list->head;
-	while (gg != NULL) {
-		if (gg->next == g) {
-			gg->next = g->next;
-			g->next = NULL;
-			g->list = NULL;
-			return;
-		}
-		gg = gg->next;
-	}
+	TAILQ_REMOVE(&list->list, g, entry);
+	g->list = NULL;
 }
 
 int
 gadget_list_handle_event(struct gadget_list *list, XEvent *event)
 {
-	struct gadget_def *g;
+	struct gadget_def *g, *gn;
 	int ret;
 
 	if (list->event_cb) {
@@ -105,8 +84,7 @@ gadget_list_handle_event(struct gadget_list *list, XEvent *event)
 	}
 
 	/* Iterate over gadgets until we find one that consumes the event */
-	g = list->head;
-	while (g != NULL) {
+	TAILQ_FOREACH_SAFE(g, &list->list, entry, gn) {
 		switch (event->type) {
 		case Expose:
 			if (! event->xexpose.count) {
@@ -163,8 +141,6 @@ gadget_list_handle_event(struct gadget_list *list, XEvent *event)
 		if (ret > 0) {
 			return (ret);
 		}
-
-		g = g->next;
 	}
 
 	return 0; /* nothing handled it */
