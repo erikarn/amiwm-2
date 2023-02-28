@@ -2,6 +2,7 @@
 #define	__LIBAMI_GADGET_H__
 
 struct gadget_def;
+struct gadget_event;
 
 /* Default x11 event check */
 typedef int gadget_def_handle_event_cb(struct gadget_def *def, XEvent *event);
@@ -15,6 +16,9 @@ typedef int gadget_def_handle_event_button_press_cb(struct gadget_def *def,
 	    int button);
 typedef int gadget_def_handle_event_button_release_cb(struct gadget_def *def,
 	    int button);
+
+/* gadget event queue run callback, optional */
+typedef int gadget_def_run_event_queue_cb(struct gadget_def *def);
 
 struct gadget_def {
 	/* next in gadget list */
@@ -46,6 +50,9 @@ struct gadget_def {
 	gadget_def_handle_event_leave_cb *event_leave_cb;
 	gadget_def_handle_event_button_press_cb *event_button_press_cb;
 	gadget_def_handle_event_button_release_cb *event_button_release_cb;
+
+	/* gadget event queue runner, if required */
+	gadget_def_run_event_queue_cb *event_queue_run_cb;
 };
 
 /* Internal method for gadgets - init */
@@ -66,5 +73,6 @@ extern	int gadget_def_handle_event_button_press(struct gadget_def *def,
 	    int button);
 extern	int gadget_def_handle_event_button_release(struct gadget_def *def,
 	    int button);
+extern	int gadget_def_run_event_queue(struct gadget_def *def);
 
 #endif	/* __LIBAMI_GADGET_H__ */

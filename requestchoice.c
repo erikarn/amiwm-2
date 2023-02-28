@@ -22,6 +22,7 @@ extern struct Library *XLibBase;
 
 #include "gadget_def.h"
 #include "gadget_list.h"
+#include "gadget_event.h"
 #include "gadget_window.h"
 #include "gadget_button.h"
 #include "gadget_textbox.h"
@@ -178,6 +179,15 @@ void endchoice()
   selection(0);
 }
 
+static int
+handle_mainwin_event(struct gadget_list *list, void *cbdata,
+    struct gadget_event *ev)
+{
+	printf("%s: called; event=%p\n", __func__, ev);
+	gadget_event_free(ev);
+	return (1);
+}
+
 int main(int argc, char *argv[])
 {
   XWindowAttributes attr;
@@ -185,7 +195,7 @@ int main(int argc, char *argv[])
   static XSizeHints size_hints;
   static XTextProperty txtprop1, txtprop2;
 #endif
-  int x, y, extra=0, n=0;
+  int x, y, extra=0, n=0, ret;
   struct choice *c;
   struct line *l;
   Argtype array[3], *atp;
@@ -310,6 +320,9 @@ int main(int argc, char *argv[])
    */
   gadget_window_update(win);
 
+  /* Set the event handler for the main window */
+  gadget_list_set_gevent_callback(win->glist, handle_mainwin_event, NULL);
+
   for(;;) {
     XEvent event;
     XNextEvent(dpy, &event);
@@ -318,8 +331,20 @@ int main(int argc, char *argv[])
     /* It will pass events to the windows glist and thus gadgets there */
     if (gadget_list_handle_event(glist, &event) == 1) {
 	printf("event handled!\n");
-        continue;
     }
+
+    /*
+     * Now, we may have events in our gadget lists.
+     *
+     * Call the top-level glist event runner, it will check
+     * if it has any events to call its callback on, and then
+     * will check any child gadgets if they want to accept
+     * gevents.  (For now only gadget_window will, as they
+     * have their own glists, and some events may just stop
+     * at that window event callback.)
+     */
+    ret = gadget_list_queue_run(glist);
+    printf("gadget_list_queue_run: ran %d events\n", ret);
 #if 0
     switch(event.type) {
     case Expose:

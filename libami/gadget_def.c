@@ -134,3 +134,12 @@ gadget_def_handle_event_button_release(struct gadget_def *def, int button)
 	}
 	return -1;
 }
+
+int
+gadget_def_run_event_queue(struct gadget_def *def)
+{
+	if (def->event_queue_run_cb) {
+		return def->event_queue_run_cb(def);
+	}
+	return -1;
+}

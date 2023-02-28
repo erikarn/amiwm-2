@@ -26,6 +26,8 @@
 
 #include "gadget_def.h"
 #include "gadget_button.h"
+#include "gadget_event.h"
+#include "gadget_list.h"
 
 #ifdef AMIGAOS
 #include <pragmas/xlib_pragmas.h>
@@ -220,6 +222,7 @@ static int
 gadget_button_handle_event_button_press(struct gadget_def *def, int button)
 {
 	struct gadget_button *b = GADGET_DEF_TO_BUTTON(def);
+	struct gadget_event *e;
 
 	/* Consume */
 	if (button != Button1) {
@@ -233,6 +236,8 @@ gadget_button_handle_event_button_press(struct gadget_def *def, int button)
 	 * TODO: trigger up a notification that the button was pressed.
 	 */
 	printf("%s: TODO: notification!\n", __func__);
+	e = gadget_event_create(0x1234, 0x00000001);
+	gadget_list_queue_gevent(def->list, e);
 	return (1);
 }
 
@@ -240,6 +245,7 @@ static int
 gadget_button_handle_event_button_release(struct gadget_def *def, int button)
 {
 	struct gadget_button *b = GADGET_DEF_TO_BUTTON(def);
+	struct gadget_event *e;
 
 	/* Consume */
 	if (button != Button1) {
@@ -255,6 +261,8 @@ gadget_button_handle_event_button_release(struct gadget_def *def, int button)
 	 * as a selection.
 	 */
 	printf("%s: TODO: notification!, entered=%d\n", __func__, b->entered);
+	e = gadget_event_create(0x1234, 0x00000002);
+	gadget_list_queue_gevent(def->list, e);
 
 	return (1);
 }

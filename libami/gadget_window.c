@@ -36,6 +36,8 @@ extern struct Library *XLibBase;
 static void gadget_window_free(struct gadget_def *def);
 static int gadget_window_handle_event(struct gadget_def *def, XEvent *event);
 
+static int gadget_window_run_queue(struct gadget_def *def);
+
 /*
  * Create a window gadget.
  *
@@ -88,6 +90,7 @@ gadget_window_init(Display *dpy, struct DrawInfo *dri, Window parent_win,
 
 	win->def.destroy_cb = gadget_window_free;
 	win->def.event_cb = gadget_window_handle_event;
+	win->def.event_queue_run_cb = gadget_window_run_queue;
 
 	win->glist = gadget_list_create();
 
@@ -209,4 +212,13 @@ gadget_window_set_background_pixmap(struct gadget_window *win, Pixmap p)
 	XSetWindowBackgroundPixmap(win->def.dpy, win->def.w, win->bg_pixmap);
 
 	return (1);
+}
+
+/* Recurse through the gadget list on this window */
+int
+gadget_window_run_queue(struct gadget_def *def)
+{
+	struct gadget_window *win = GADGET_DEF_TO_WINDOW(def);
+
+	return gadget_list_queue_run(win->glist);
 }

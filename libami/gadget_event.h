@@ -43,7 +43,19 @@
  * callback data.
  */
 struct gadget_event;
+struct gadget_list;
+
 struct gadget_event {
+	/* Placeholders for now */
+	uint32_t id;
+	uint32_t sub_id;
+
+	/* Gadget list queue entry */
+	TAILQ_ENTRY(gadget_event) entry;
+	struct gadget_list *parent;
 };
+
+extern	struct gadget_event * gadget_event_create(uint32_t id, uint32_t subid);
+extern	void gadget_event_free(struct gadget_event *event);
 
 #endif
