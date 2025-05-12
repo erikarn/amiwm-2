@@ -1,0 +1,42 @@
+srcdir = @srcdir@
+VPATH = @srcdir@
+SHELL = /bin/sh
+CC = @CC@
+LEX = @LEX@
+YACC = @YACC@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
+DEFS = @DEFS@
+ALL_CFLAGS = -Wall -I. -I@top_srcdir@ -I@top_srcdir@/libami $(DEFS) $(CFLAGS) @X_CFLAGS@
+LIBS = @X_LIBS@ @X_PRE_LIBS@ -Llibami -lami @XT_LIB_KLUDGE@ -lXext -lXmu \
+	-lX11 @X_EXTRA_LIBS@ @LIBS@ -L@top_srcdir@/libami
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libdir = @libdir@
+mandir = @mandir@
+INSTALL = @INSTALL@
+LN_S = @LN_S@
+RM = -rm -f
+LIBAMI = ../../libami/libami.a
+DT_DIR = /etc/dt
+STRIPFLAG = -s
+
+AMIWM_HOME = $(libdir)/amiwm
+AMIWM_MODULES = $(libdir)/amiwm/modules
+
+.c.o:
+	$(CC) -c $(CPPFLAGS) $(ALL_CFLAGS) $<
+
+all: Battery
+
+install: Battery
+	$(INSTALL) $(STRIPFLAG) Battery $(DESTDIR)$(AMIWM_MODULES)/Battery
+
+Battery: battery_module.o $(LIBAMI)
+	$(CC) $(LDFLAGS) -o Battery battery_module.o $(LIBS)
+
+clean:
+	$(RM) Battery *.o
+
+#--DO NOT REMOVE THIS LINE--
