@@ -129,6 +129,17 @@ static int keypressfunc(XEvent *e)
   return 0;
 }
 
+/**
+ * Setup a hotkey route from amiwm.
+ *
+ * @param ks	x11 keysym
+ * @param mod	x11 modifier bitmask
+ * @param m	meta flag (Alt/Meta key)
+ * @param pos	keypress position - IN_FRAME_MASK, IN_ICON_MASK,
+ * 		IN_ROOT_MASK, IN_WINDOW_MASK, IN_ANYTHING_MASK
+ * @param cb	callback
+ * @param cbdata	callback data
+ */
 void cx_hotkey(KeySym ks, unsigned int mod, int m, int pos,
 	       void (*cb)(XEvent *, void *), void *cd)
 {
