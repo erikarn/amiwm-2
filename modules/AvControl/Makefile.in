@@ -18,33 +18,25 @@ mandir = @mandir@
 INSTALL = @INSTALL@
 LN_S = @LN_S@
 RM = -rm -f
-LIBAMI = @top_srcdir@/libami/libami.a
+LIBAMI = ../../libami/libami.a
 DT_DIR = /etc/dt
 STRIPFLAG = -s
 
 AMIWM_HOME = $(libdir)/amiwm
 AMIWM_MODULES = $(libdir)/amiwm/modules
 
-all: AvControl
-
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(ALL_CFLAGS) $<
 
-%.tab.c %.tab.h: %.y
-	$(YACC) -b $* -d $<
-
-av_control_lexer.c: av_control_lexer.l
-	$(LEX) -t $< > av_control_lexer.c
-
-av_control_lexer.o: av_control_module.tab.h
-
-AvControl: av_control_module.tab.o av_control_lexer.o $(LIBAMI)
-	$(CC) $(LDFLAGS) -o AvControl av_control_module.tab.o av_control_lexer.o $(LIBS)
-
-clean:
-	$(RM) *.o av_control_lexer.c *.tab.c *.tab.h AvControl
-
+all: AvControl
 
 install: AvControl
 	$(INSTALL) $(STRIPFLAG) AvControl $(DESTDIR)$(AMIWM_MODULES)/AvControl
 
+AvControl: avcontrol_module.o $(LIBAMI)
+	$(CC) $(LDFLAGS) -o AvControl avcontrol_module.o $(LIBS)
+
+clean:
+	$(RM) AvControl *.o
+
+#--DO NOT REMOVE THIS LINE--
