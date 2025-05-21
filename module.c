@@ -289,6 +289,15 @@ static void reply_module(struct module *m, char *data, int len)
     m_write(m->out_fd, data, len);
 }
 
+/**
+ * Attempt to dispatch the given event/mask to a module.
+ *
+ * If a module has a broker registered with no mask, or there's a mask
+ * registed, then route the event to the given module and return 1
+ * to signify the event has been consumed.
+ *
+ * Otherwise, return 0 to signify the event has not been consumed.
+ */
 int dispatch_event_to_broker(XEvent *e, unsigned long mask, struct module *m)
 {
   Client *c;
