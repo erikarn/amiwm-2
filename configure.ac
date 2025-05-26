@@ -132,5 +132,5 @@ AC_MSG_RESULT(backward)],[AC_MSG_RESULT(normal)],[AC_MSG_RESULT(no idea)])
 
 AC_SUBST(x_includes)
 AC_SUBST(x_libraries)
-AC_CONFIG_FILES([Makefile libami/Makefile modules/Battery/Makefile])
+AC_CONFIG_FILES([Makefile libami/Makefile modules/Battery/Makefile modules/Keyboard/Makefile])
 AC_OUTPUT

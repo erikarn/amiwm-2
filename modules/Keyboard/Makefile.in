@@ -1,0 +1,50 @@
+srcdir = @srcdir@
+VPATH = @srcdir@
+SHELL = /bin/sh
+CC = @CC@
+LEX = @LEX@
+YACC = @YACC@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
+DEFS = @DEFS@
+ALL_CFLAGS = -Wall -I. -I@top_srcdir@ -I@top_srcdir@/libami $(DEFS) $(CFLAGS) @X_CFLAGS@
+LIBS = @X_LIBS@ @X_PRE_LIBS@ -Llibami -lami @XT_LIB_KLUDGE@ -lXext -lXmu \
+	-lX11 @X_EXTRA_LIBS@ @LIBS@ -L@top_srcdir@/libami
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libdir = @libdir@
+mandir = @mandir@
+INSTALL = @INSTALL@
+LN_S = @LN_S@
+RM = -rm -f
+LIBAMI = @top_srcdir@/libami/libami.a
+DT_DIR = /etc/dt
+STRIPFLAG = -s
+
+AMIWM_HOME = $(libdir)/amiwm
+AMIWM_MODULES = $(libdir)/amiwm/modules
+
+all: Keyboard
+
+.c.o:
+	$(CC) -c $(CPPFLAGS) $(ALL_CFLAGS) $<
+
+%.tab.c %.tab.h: %.y
+	$(YACC) -b $* -d $<
+
+kbdlexer.c: kbdlexer.l
+	$(LEX) -t $< > kbdlexer.c
+
+kbdlexer.o: kbdmodule.tab.h
+
+Keyboard: kbdmodule.tab.o kbdlexer.o $(LIBAMI)
+	$(CC) $(LDFLAGS) -o Keyboard kbdmodule.tab.o kbdlexer.o $(LIBS)
+
+clean:
+	$(RM) *.o kbdlexer.c *.tab.c *.tab.h Keyboard
+
+
+install: Keyboard
+	$(INSTALL) $(STRIPFLAG) Keyboard $(DESTDIR)$(AMIWM_MODULES)/Keyboard
+

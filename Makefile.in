@@ -24,7 +24,7 @@ STRIPFLAG = -s
 
 PROGS = amiwm requestchoice executecmd ppmtoinfo config_util
 
-MODULES = Background Keyboard Background_resize Background_stretch \
+MODULES = Background Background_resize Background_stretch \
 	    def_tool.info Filesystem Launcher
 
 OBJS  = main.o screen.o client.o frame.o icc.o \
@@ -34,7 +34,7 @@ OBJS  = main.o screen.o client.o frame.o icc.o \
 SRCS = main.c screen.c client.c frame.c icc.c \
 		icon.c menu.c diskobject.c gram.tab.c lex.c rc.c \
 		module.c \
-		requestchoice.c executecmd.c kbdmodule.tab.c kbdlexer.c \
+		requestchoice.c executecmd.c \
 		config_util.c launchermodule.c
 
 DISTFILES = README.md MODULES.md INSTALL LICENSE amiwm.1 \
@@ -62,12 +62,15 @@ lib_clean:
 
 modules_all:
 	@( cd modules/Battery; $(MAKE) all )
+	@( cd modules/Keyboard; $(MAKE) all )
 
 modules_clean:
 	@( cd modules/Battery; $(MAKE) clean )
+	@( cd modules/Keyboard; $(MAKE) clean )
 
 modules_install:
 	@( cd modules/Battery; $(MAKE) install )
+	@( cd modules/Keyboard; $(MAKE) install )
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(ALL_CFLAGS) $<
@@ -93,11 +96,7 @@ ppmtoinfo.o: ppmtoinfo.c
 lex.c: lex.l
 	$(LEX) -t $< > lex.c
 
-kbdlexer.c: kbdlexer.l
-	$(LEX) -t $< > kbdlexer.c
-
 lex.o: gram.tab.h
-kbdlexer.o: kbdmodule.tab.h
 
 install: $(PROGS) $(MODULES) system.amiwmrc Xsession Xsession2 Xinitrc amiwm-init modules_install
 	-mkdir -p $(DESTDIR)$(AMIWM_HOME)
@@ -172,9 +171,6 @@ executecmd: executecmd.o $(LIBAMI)
 Filesystem: filesystem.o $(LIBAMI)
 	$(CC) $(LDFLAGS) -o Filesystem filesystem.o $(LIBS)
 
-Keyboard: kbdmodule.tab.o kbdlexer.o $(LIBAMI)
-	$(CC) $(LDFLAGS) -o Keyboard kbdmodule.tab.o kbdlexer.o $(LIBS)
-
 Launcher: launchermodule.o $(LIBAMI)
 	$(CC) $(LDFLAGS) -o Launcher launchermodule.o $(LIBS)
 
@@ -185,9 +181,8 @@ localetest: localetest.o $(LIBAMI)
 	$(CC) $(LDFLAGS) -o localetest localetest.o $(LIBS)
 
 clean: lib_clean modules_clean
-	$(RM) core $(PROGS) $(LIBAMI) Keyboard Launcher *.o
+	$(RM) core $(PROGS) $(LIBAMI) Launcher *.o
 	$(RM) lex.yy.c lex.c gram.tab.h gram.tab.c
-	$(RM) kbdlexer.c kbdmodule.tab.h kbdmodule.tab.c
 	$(RM) config.log
 
 distclean: clean
